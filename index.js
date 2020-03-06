@@ -30,8 +30,8 @@ const LaunchRequestHandler = {
         handlerInput.attributesManager.setSessionAttributes(sessionAttributes);
         
         // welcome message
-        var prompt      = "<audio src='https://whos-that-disney-character.s3.us-east-2.amazonaws.com/audio/edited/theme.mp3'/> <break time='0.5s'/> Welcome to the Unofficial Disney Guessing Game! <break time='300ms'/> Please say Start Game to get started. <break time='200ms'/> You can say stop to quit at anytime.";
-        var reprompt    = "Please say Start Game to get started.";
+        var prompt      = "<audio src='https://whos-that-disney-character.s3.us-east-2.amazonaws.com/audio/edited/theme.mp3'/> <break time='0.5s'/> Welcome to the Unofficial Disney Guessing Game! <break time='300ms'/> Please say Start Game. <break time='200ms'/> You can say stop to quit at anytime.";
+        var reprompt    = "Please say Start Game to continue.";
         var display     = {
             title:      "Who's That Disney Character?",
             image:      "https://whos-that-disney-character.s3.us-east-2.amazonaws.com/images/Walt-Disney-logo.png",
