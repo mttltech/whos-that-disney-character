@@ -31,11 +31,11 @@ const LaunchRequestHandler = {
         
         // welcome message
         var prompt      = "<audio src='https://whos-that-disney-character.s3.us-east-2.amazonaws.com/audio/edited/theme.mp3'/> <break time='0.5s'/> Welcome to the Unofficial Disney Guessing Game! <break time='300ms'/> Please say Start Game. <break time='200ms'/> You can say stop to quit at anytime.";
-        var reprompt    = "Please say Start Game to continue.";
+        var reprompt    = "Please say Start Game to get started.";
         var display     = {
             title:      "Who's That Disney Character?",
-            image:      "https://whos-that-disney-character.s3.us-east-2.amazonaws.com/images/Walt-Disney-logo.png",
-            background: "https://whos-that-disney-character.s3.us-east-2.amazonaws.com/images/white.jpg",
+            image:      "https://whos-that-disney-character.s3.us-east-2.amazonaws.com/images/welcome.png",
+            background: "https://whos-that-disney-character.s3.us-east-2.amazonaws.com/images/background-stars.png",
         };
 
         return speak(handlerInput,prompt,reprompt,display);
@@ -53,19 +53,14 @@ const StartIntent   = {
         const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
 
         // grab random item (in this case, disney character)
-        const item      = grabRandomItem(sessionAttributes.prev);
-        
-        // set item to session
-        sessionAttributes.item  = item;
-        sessionAttributes.prev.push(item.id);   // add this item to our prev array
-        handlerInput.attributesManager.setSessionAttributes(sessionAttributes);
+        const item      = grabRandomItem(handlerInput);
 
-        var prompt      = item.desc + " <break time='300ms'/> Who is that Disney character?";
+        var prompt      = item.desc + " <audio src='https://whos-that-disney-character.s3.us-east-2.amazonaws.com/audio/edited/" + item.id + ".mp3'/> <break time='300ms'/> Who is that Disney character?";
         var reprompt    = "You can say repeat <break time='300ms'/> or ask for a hint.";
         var display     = {
             title:      "Who's That Disney Character?",
-            image:      "https://whos-that-disney-character.s3.us-east-2.amazonaws.com/images/actual/"+item.id+".png",
-            background: "https://mttl-tech.s3.amazonaws.com/whos-that-pokemon/images/bg-blue.png"
+            image:      "https://whos-that-disney-character.s3.us-east-2.amazonaws.com/images/silhouette/"+item.id+".png",
+            background: "https://whos-that-disney-character.s3.us-east-2.amazonaws.com/images/background-clouds.png"
         };
 
         // speak
@@ -95,7 +90,7 @@ const DisneyIntent  = {
             const item_id   = item_val.id;
             const item_name = item_val.name;
 
-            correct         = (item_id === sessionAttributes.item.id)? item_slot.value + " is correct! <audio src='https://whos-that-disney-character.s3.us-east-2.amazonaws.com/audio/edited/wand.mp3'/>": "I'm sorry, " + item_slot.value + " is incorrect! <audio src='https://whos-that-disney-character.s3.us-east-2.amazonaws.com/audio/edited/buzzer.mp3'/> The correct answer is " + sessionAttributes.item.name;
+            correct         = (item_id === sessionAttributes.item.id)? "<audio src='https://whos-that-disney-character.s3.us-east-2.amazonaws.com/audio/edited/wand.mp3'/> " + item_slot.value + " is correct! ": "<audio src='https://whos-that-disney-character.s3.us-east-2.amazonaws.com/audio/edited/buzzer.mp3'/> I'm sorry, " + item_slot.value + " is incorrect! <break time='300ms'/> The correct answer is " + sessionAttributes.item.name;
 
             prompt          = correct + " <break time='300ms'/> ";
 
@@ -106,22 +101,67 @@ const DisneyIntent  = {
 
         }
 
-        // grab next item
-        var item            = grabRandomItem(sessionAttributes.prev);
-
-        // add new item to session
-        sessionAttributes.item  = item;
-        sessionAttributes.prev.push(item.id);   // add this item to our prev array
-        handlerInput.attributesManager.setSessionAttributes(sessionAttributes);        
-
-        // add to prompt
-        prompt              += " <break time='1s'/> " + item.desc + " <break time='300ms'/> Who is that Disney character?";
+        prompt  += "<break time='300ms'/> Would you like to guess another character?";
 
         var display     = {
             title:      "Who's That Disney Character?",
-            image:      "https://whos-that-disney-character.s3.us-east-2.amazonaws.com/images/actual/"+item.id+".png",
-            background: "https://mttl-tech.s3.amazonaws.com/whos-that-pokemon/images/bg-blue.png"
+            image:      "https://whos-that-disney-character.s3.us-east-2.amazonaws.com/images/actual/"+sessionAttributes.item.id+".png",
+            background: "https://whos-that-disney-character.s3.us-east-2.amazonaws.com/images/background-clouds.png"
         };
+
+        return speak(handlerInput,prompt,reprompt,display);
+    }
+};
+
+// YesNoIntent
+const YesNoIntent   = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
+            && (Alexa.getIntentName(handlerInput.requestEnvelope) === 'YesNoIntent'
+            || Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.YesIntent' 
+            || Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.NoIntent');
+    },
+    handle(handlerInput) {
+
+        const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+        const yesno             = handlerInput.requestEnvelope.request.intent.slots.yesno.resolutions.resolutionsPerAuthority[0].values[0].value.name;
+        var prompt              = "";
+        var reprompt            = "";
+        var item                = {};
+        var display             = {};
+
+        if (yesno === 'no'){
+
+            // grab current item
+            item    = grabCurrentItem(handlerInput);
+
+            // set speech
+            prompt      = "Please say stop to quit playing or say next to move on to the next Disney character.";
+            reprompt    = prompt;
+
+            display     = {
+                title:      "Who's That Disney Character?",
+                image:      "https://whos-that-disney-character.s3.us-east-2.amazonaws.com/images/actual/"+item.id+".png",
+                background: "https://whos-that-disney-character.s3.us-east-2.amazonaws.com/images/background-clouds.png"
+            };
+
+        } else {
+
+            // grab next item
+            item            = grabRandomItem(handlerInput);   
+
+            // add to prompt
+            prompt              = item.desc + " <audio src='https://whos-that-disney-character.s3.us-east-2.amazonaws.com/audio/edited/" + item.id + ".mp3'/> <break time='300ms'/> Who is that Disney character?";
+            reprompt            = prompt;
+
+            display     = {
+                title:      "Who's That Disney Character?",
+                image:      "https://whos-that-disney-character.s3.us-east-2.amazonaws.com/images/silhouette/"+item.id+".png",
+                background: "https://whos-that-disney-character.s3.us-east-2.amazonaws.com/images/background-clouds.png"
+            };
+
+        }
+
 
         return speak(handlerInput,prompt,reprompt,display);
 
@@ -140,12 +180,12 @@ const RepeatIntent  = {
         // grab current item (in this case, disney character)
         const item      = grabCurrentItem(handlerInput);
 
-        var prompt      = item.desc + " <break time='300ms'/> Who is that Disney character?";
+        var prompt      = item.desc + " <audio src='https://whos-that-disney-character.s3.us-east-2.amazonaws.com/audio/edited/" + item.id + ".mp3'/> <break time='300ms'/> Who is that Disney character?";
         var reprompt    = "You can say repeat <break time='300ms'/> or ask for a hint.";
         var display     = {
             title:      "Who's That Disney Character?",
-            image:      "https://whos-that-disney-character.s3.us-east-2.amazonaws.com/images/actual/"+item.id+".png",
-            background: "https://mttl-tech.s3.amazonaws.com/whos-that-pokemon/images/bg-blue.png"
+            image:      "https://whos-that-disney-character.s3.us-east-2.amazonaws.com/images/silhouette/"+item.id+".png",
+            background: "https://whos-that-disney-character.s3.us-east-2.amazonaws.com/images/background-clouds.png"
         };
 
         // speak
@@ -163,12 +203,24 @@ const HintIntent    = {
         // grab current item (in this case, disney character)
         const item      = grabCurrentItem(handlerInput);
 
-        var prompt      = "This character makes the following sound <break time='300ms'/> <audio src='https://whos-that-disney-character.s3.us-east-2.amazonaws.com/audio/edited/" + item.id + ".mp3'/> Who is that Disney character?";
+        // detemrine which movies this character is in
+        var count       = item.movies.length;
+        var movies      = "";
+        for(var i = 0;i<item.movies.length;i++){
+            if (i !== 0){
+                movies += " and ";
+            }
+            movies += item.movies[i];
+        }
+
+        var speech      = (count === 1)? 'movie':'movies';
+
+        var prompt      = "This character was in " + count + " " + speech + " <break time='300ms'/> " + movies + " <break time='300ms'/> Who is that Disney character?";
         var reprompt    = "You can say repeat <break time='300ms'/> or ask for a hint.";
         var display     = {
             title:      "Who's That Disney Character?",
-            image:      "https://whos-that-disney-character.s3.us-east-2.amazonaws.com/images/actual/"+item.id+".png",
-            background: "https://mttl-tech.s3.amazonaws.com/whos-that-pokemon/images/bg-blue.png"
+            image:      "https://whos-that-disney-character.s3.us-east-2.amazonaws.com/images/silhouette/"+item.id+".png",
+            background: "https://whos-that-disney-character.s3.us-east-2.amazonaws.com/images/background-clouds.png"
         };
 
         // speak
@@ -183,7 +235,21 @@ const DunnoIntent   = {
             && Alexa.getIntentName(handlerInput.requestEnvelope) === 'DunnoIntent';
     },
     handle(handlerInput) {
-        return DisneyIntent.handle(handlerInput);
+        const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+        var prompt              = "";
+        var reprompt            = "You can say repeat <break time='300ms'/> or ask for a hint.";
+   
+        // user didn't answer - they may have just said I don't know
+        prompt  += "The correct answer is " + sessionAttributes.item.name + " <break time='300ms'/> ";
+        prompt  += "<break time='300ms'/> Would you like to guess another character?";
+
+        var display     = {
+            title:      "Who's That Disney Character?",
+            image:      "https://whos-that-disney-character.s3.us-east-2.amazonaws.com/images/actual/"+sessionAttributes.item.id+".png",
+            background: "https://whos-that-disney-character.s3.us-east-2.amazonaws.com/images/background-clouds.png"
+        };
+
+        return speak(handlerInput,prompt,reprompt,display);
     }
 };
 
@@ -195,7 +261,22 @@ const SkipIntent    = {
             || Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.NextIntent');
     },
     handle(handlerInput) {
-        return DisneyIntent.handle(handlerInput);
+        // grab next item
+        var item            = grabRandomItem(handlerInput);
+        var prompt          = "";
+        var reprompt        = "";
+
+        // add to prompt
+        prompt              += item.desc + " <audio src='https://whos-that-disney-character.s3.us-east-2.amazonaws.com/audio/edited/" + item.id + ".mp3'/> <break time='300ms'/> Who is that Disney character?";
+        reprompt            = prompt;
+
+        var display     = {
+            title:      "Who's That Disney Character?",
+            image:      "https://whos-that-disney-character.s3.us-east-2.amazonaws.com/images/silhouette/"+item.id+".png",
+            background: "https://whos-that-disney-character.s3.us-east-2.amazonaws.com/images/background-clouds.png"
+        };
+
+        return speak(handlerInput,prompt,reprompt,display);
     }
 };
 
@@ -250,13 +331,33 @@ const IntentReflectorHandler = {
         return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest';
     },
     handle(handlerInput) {
+
+        const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+        var prompt              = "";
+        var reprompt            = "";
+   
+        // user didn't answer - they may have just said I don't know
+        prompt      += "<audio src='https://whos-that-disney-character.s3.us-east-2.amazonaws.com/audio/edited/buzzer.mp3'/> That is incorrect.  The correct answer is " + sessionAttributes.item.name + " <break time='300ms'/> ";
+        prompt      += "<break time='300ms'/> Would you like to guess another character?";
+        reprompt    = prompt;
+
+        var display     = {
+            title:      "Who's That Disney Character?",
+            image:      "https://whos-that-disney-character.s3.us-east-2.amazonaws.com/images/actual/"+sessionAttributes.item.id+".png",
+            background: "https://whos-that-disney-character.s3.us-east-2.amazonaws.com/images/background-clouds.png"
+        };
+
+        return speak(handlerInput,prompt,reprompt,display);
+
+        /*
         const intentName = Alexa.getIntentName(handlerInput.requestEnvelope);
-        //const speakOutput = "Sorry, I don't recognize that Character. Please try again. <break time='300ms'/> You can say skip <break time='300ms'/>, repeat <break time='300ms'/>, or ask for a hint.";
-        const speakOutput = 'intent reflector';
+        const speakOutput = "Sorry, I don't recognize that Character. Please try again. <break time='300ms'/> You can say skip <break time='300ms'/>, repeat <break time='300ms'/>, or ask for a hint.";
+        //const speakOutput = 'intent reflector';
         return handlerInput.responseBuilder
             .speak(speakOutput)
             .reprompt(speakOutput)
             .getResponse();
+        */
     }
 };
 
@@ -268,15 +369,35 @@ const ErrorHandler = {
         return true;
     },
     handle(handlerInput, error) {
+
+        const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+        var prompt              = "";
+        var reprompt            = "";
+   
+        // user didn't answer - they may have just said I don't know
+        prompt      += "<audio src='https://whos-that-disney-character.s3.us-east-2.amazonaws.com/audio/edited/buzzer.mp3'/> That is incorrect.  The correct answer is " + sessionAttributes.item.name + " <break time='300ms'/> ";
+        prompt      += "<break time='300ms'/> Would you like to guess another character?";
+        reprompt    = prompt;
+
+        var display     = {
+            title:      "Who's That Disney Character?",
+            image:      "https://whos-that-disney-character.s3.us-east-2.amazonaws.com/images/actual/"+sessionAttributes.item.id+".png",
+            background: "https://whos-that-disney-character.s3.us-east-2.amazonaws.com/images/background-clouds.png"
+        };
+
+        return speak(handlerInput,prompt,reprompt,display);
+
+        /*
         console.log(`~~~~ Error handled: ${error.stack}`);
         //const speakOutput = `Sorry, I had trouble doing what you asked. Please try again.`;
         
-        //const speakOutput = "Sorry, I don't recognize that Character. Please try again. <break time='300ms'/> You can say skip <break time='300ms'/>, repeat <break time='300ms'/>, or ask for a hint.";
-        const speakOutput = 'error handler';
+        const speakOutput = "Sorry, I don't recognize that Disney Character. Please try again. <break time='300ms'/> You can say skip <break time='300ms'/>, repeat <break time='300ms'/>, or ask for a hint.";
+        //const speakOutput = 'error handler';
         return handlerInput.responseBuilder
             .speak(speakOutput)
             .reprompt(speakOutput)
             .getResponse();
+        */
     }
 };
 
@@ -292,8 +413,11 @@ const supportsDisplay = function(handlerInput) {
   return hasDisplay;
 }
 
-const grabRandomItem        = function(prev_items=[]){
-    var pool    = all_items;
+const grabRandomItem        = function(handlerInput){
+
+    const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+    var prev_items  = sessionAttributes.prev;
+    var pool        = all_items;
 
     // remove used items
     if(prev_items && prev_items.length && prev_items.length < pool.length){
@@ -304,9 +428,17 @@ const grabRandomItem        = function(prev_items=[]){
                 }
             }
         }
+    } else {
+        // reset prev array since we've used all characters
+        sessionAttributes.prev  = [];
     }
 
     var item    = pool[Math.floor(Math.random() * pool.length)];
+
+    // set new item to session
+    sessionAttributes.item  = item;
+    sessionAttributes.prev.push(item.id);   // add this item to our prev array
+    handlerInput.attributesManager.setSessionAttributes(sessionAttributes);
 
     return item;
 }
@@ -360,6 +492,7 @@ exports.handler = Alexa.SkillBuilders.custom()
         LaunchRequestHandler,
         StartIntent,
         DisneyIntent,
+        YesNoIntent,
         RepeatIntent,
         HintIntent,
         DunnoIntent,
