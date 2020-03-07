@@ -30,7 +30,7 @@ const LaunchRequestHandler = {
         handlerInput.attributesManager.setSessionAttributes(sessionAttributes);
         
         // welcome message
-        var prompt      = "<audio src='https://whos-that-disney-character.s3.us-east-2.amazonaws.com/audio/edited/disneytime.mp3'/> <break time='0.5s'/> Welcome to the Unofficial Disney Guessing Game! <break time='300ms'/> Please say Start Game. <break time='200ms'/> You can say stop to quit at anytime.";
+        var prompt      = "<audio src='https://whos-that-disney-character.s3.us-east-2.amazonaws.com/audio/edited/disneytime-trim.mp3'/> <break time='0.5s'/> Welcome to the Unofficial Disney Guessing Game! <break time='300ms'/> Please say Start Game. <break time='200ms'/> You can say stop to quit at anytime.";
         var reprompt    = "Please say Start Game to get started.";
         var display     = {
             title:      "Who's That Disney Character?",
@@ -56,7 +56,7 @@ const StartIntent   = {
         const item      = grabRandomItem(handlerInput);
 
         var prompt      = item.desc + " <audio src='https://whos-that-disney-character.s3.us-east-2.amazonaws.com/audio/edited/" + item.id + ".mp3'/> <break time='300ms'/> Who is that Disney character?";
-        var reprompt    = "You can say repeat <break time='300ms'/> or ask for a hint.";
+        var reprompt    = "You can say repeat, <break time='300ms'/> skip, <break time='300ms'/> or say stop to quit.";
         var display     = {
             title:      "Who's That Disney Character?",
             image:      "https://whos-that-disney-character.s3.us-east-2.amazonaws.com/images/silhouette/"+item.id+".png",
@@ -79,7 +79,7 @@ const DisneyIntent  = {
     handle(handlerInput) {
         const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
         var prompt              = "";
-        var reprompt            = "You can say repeat <break time='300ms'/> or ask for a hint.";
+        var reprompt            = "You can say repeat, <break time='300ms'/> skip, <break time='300ms'/> or say stop to quit.";
         var correct             = false;
 
         // if user answered a question - determine if right or wrong
@@ -181,7 +181,7 @@ const RepeatIntent  = {
         const item      = grabCurrentItem(handlerInput);
 
         var prompt      = item.desc + " <audio src='https://whos-that-disney-character.s3.us-east-2.amazonaws.com/audio/edited/" + item.id + ".mp3'/> <break time='300ms'/> Who is that Disney character?";
-        var reprompt    = "You can say repeat <break time='300ms'/> or ask for a hint.";
+        var reprompt    = "You can say repeat, <break time='300ms'/> skip, <break time='300ms'/> or say stop to quit.";
         var display     = {
             title:      "Who's That Disney Character?",
             image:      "https://whos-that-disney-character.s3.us-east-2.amazonaws.com/images/silhouette/"+item.id+".png",
@@ -193,6 +193,7 @@ const RepeatIntent  = {
     }
 }; 
 
+/*
 // HintIntent
 const HintIntent    = {
     canHandle(handlerInput) {
@@ -227,6 +228,7 @@ const HintIntent    = {
         return speak(handlerInput,prompt,reprompt,display);
     }  
 };
+*/
 
 // DunnoIntent
 const DunnoIntent   = {
@@ -237,7 +239,7 @@ const DunnoIntent   = {
     handle(handlerInput) {
         const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
         var prompt              = "";
-        var reprompt            = "You can say repeat <break time='300ms'/> or ask for a hint.";
+        var reprompt            = "You can say repeat, <break time='300ms'/> skip, <break time='300ms'/> or say stop to quit.";
    
         // user didn't answer - they may have just said I don't know
         prompt  += "The correct answer is " + sessionAttributes.item.name + " <break time='300ms'/> ";
@@ -290,7 +292,7 @@ const HelpIntentHandler = {
             && Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.HelpIntent';
     },
     handle(handlerInput) {
-        const speakOutput = "You can say repeat, <break time='300ms'/>ask for a hint, <break time='300ms'/> or say stop to quit.";
+        const speakOutput = "You can say repeat, <break time='300ms'/> skip, <break time='300ms'/> or say stop to quit.";
 
         return handlerInput.responseBuilder
             .speak(speakOutput)
@@ -494,7 +496,7 @@ exports.handler = Alexa.SkillBuilders.custom()
         DisneyIntent,
         YesNoIntent,
         RepeatIntent,
-        HintIntent,
+        //HintIntent,
         DunnoIntent,
         SkipIntent,
         //HelloWorldIntentHandler,
